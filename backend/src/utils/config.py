@@ -10,7 +10,7 @@ config = {
     # API configuration
     "API_PORT": os.getenv("PORT") or 3001,
     # Elasticsearch configuration
-    "ES_HOST": "localhost",
+    "ES_HOST": os.getenv("ELASTICSEARCH_HOST") or "localhost",
     "ES_PORT": os.getenv("ELASTICSEARCH_PORT") or "9200",
     "ES_CLIENT": os.getenv("ELASTICSEARCH_CLIENT"),
     "ES_PASSWORD": os.getenv("ELASTICSEARCH_PASSWORD"),

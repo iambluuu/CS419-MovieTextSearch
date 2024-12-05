@@ -1,16 +1,9 @@
+import json
+import os
 import pandas as pd
 
-from elasticsearch import Elasticsearch
-from ..utils.config import config
-
-# Initialize Elasticsearch client
-es = Elasticsearch(
-    [{"host": config["ES_HOST"], "port": int(config["ES_PORT"]), "scheme": "http"}],
-    basic_auth=(config["ES_CLIENT"], config["ES_PASSWORD"]),
-    verify_certs=False,
-)
-
-print(es.info())
+from elasticsearch import helpers
+from ..services.elastic import es
 
 
 def load_movies_to_es(csv_path: str, index_name: str) -> None:
@@ -22,6 +15,9 @@ def load_movies_to_es(csv_path: str, index_name: str) -> None:
 
     Returns:
         None
+
+    Raises:
+        FileNotFoundError: If the CSV file is not found.
     """
 
     mapping = {
@@ -33,7 +29,7 @@ def load_movies_to_es(csv_path: str, index_name: str) -> None:
                 "keywords": {"type": "text"},
                 "original_language": {"type": "keyword"},
                 "overview": {"type": "text"},
-                "release_date": {"type": "date", "format": "dd/MM/yyyy"},
+                "release_date": {"type": "date", "format": "yyyy-MM-dd"},
                 "runtime": {"type": "float"},
                 "vote_average": {"type": "float"},
                 "vote_count": {"type": "integer"},
@@ -43,17 +39,30 @@ def load_movies_to_es(csv_path: str, index_name: str) -> None:
         }
     }
 
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"File not found: {csv_path}")
+
     try:
         df = pd.read_csv(csv_path)
+
         # Ensures Elasticsearch index is created
         if es.indices.exists(index=index_name):
             es.indices.delete(index=index_name)
-        es.indices.create(index=index_name)
+        es.indices.create(index=index_name, body=mapping)
 
         # Bulk upload data
+        actions: list = []
+
         for i, row in df.iterrows():
-            doc = row.to_dict()
-            es.index(index=index_name, body=doc)
+            action = {
+                "_index": index_name,
+                "_id": i,
+                "_source": row.to_dict(),
+            }
+            actions.append(action)
+
+        if len(actions) > 0:
+            helpers.bulk(es, actions, index=index_name)
 
     except Exception as e:
         raise e
