@@ -5,6 +5,8 @@ load_dotenv(".env")
 
 # Interface
 config = {
+    # Movie dataset
+    "DATA_PATH": "src/data/movies.csv",
     # API configuration
     "API_PORT": os.getenv("PORT") or 3001,
     # Elasticsearch configuration

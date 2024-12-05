@@ -1,7 +1,14 @@
+"""Main FastAPI application file."""
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
+
+from src.routes.movies import movie_router
+from src.services.load_movies import load_movies_to_es
+from src.utils.preprocess import preprocess_data
+from src.utils.config import config
 
 
 class Server:
@@ -49,6 +56,9 @@ class Server:
         async def root():
             return {"message": "Hello World"}
 
+        # Add the movie search route
+        self.app.include_router(movie_router, prefix="/movies", tags=["movies"])
+
         return
 
     def run(self):
@@ -62,8 +72,22 @@ class Server:
             print(f"An error occurred: {e}")
 
 
+def __init__() -> None:
+    """Initialize the server."""
+
+    # Preprocess the dataset
+    preprocess_data(config["DATA_PATH"])
+
+    # Load the dataset into Elasticsearch
+    load_movies_to_es(csv_path="src/data/cleaned.csv", index_name="movies")
+
+
 if __name__ == "__main__":
     """Run the FastAPI application."""
 
+    # Initialize the server
+    __init__()
+
+    # Run the server
     app = Server()
     app.run()
