@@ -37,7 +37,7 @@ def preprocess_data(data_path: str, save_path: str, sample: int = 500) -> None:
     df.fillna(
         {
             "budget": 0,
-            "genres": "[]",
+            "genres": "Unknown",
             "homepage": "Unknown",
             "keywords": "Unknown",
             "original_language": "Unknown",

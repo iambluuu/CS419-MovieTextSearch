@@ -51,6 +51,40 @@ async def RP_search_movie(request: MovieSearchRequest):
     return response
 
 
+@movie_router.get("/genres")
+async def RG_get_all_genres():
+    """Get all genres.
+
+    Returns:
+        dict: Search results.
+    """
+    response: dict = RC_get_all_genres("movies")
+
+    if "error" in response:
+        raise HTTPException(status_code=400, detail=response["error"])
+
+    return response
+
+
+@movie_router.get("/suggest")
+async def RG_get_suggestions(query: str):
+    """Get movie suggestions.
+
+    Args:
+        query (str): Search query.
+
+    Returns:
+        dict: Search results.
+    """
+
+    response: dict = RC_get_suggestions("movies", query)
+
+    if "error" in response:
+        raise HTTPException(status_code=400, detail=response["error"])
+
+    return response
+
+
 @movie_router.get("/{id}")
 async def RG_get_movie(id: str):
     """Get movie by ID.

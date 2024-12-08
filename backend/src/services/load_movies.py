@@ -1,5 +1,4 @@
 import ast
-import json
 import os
 import pandas as pd
 
@@ -37,7 +36,16 @@ def load_movies_to_es(csv_path: str, index_name: str) -> None:
                 "runtime": {"type": "double"},
                 "status": {"type": "keyword"},
                 "tagline": {"type": "text"},
-                "title": {"type": "text"},
+                "title": {
+                    "type": "text",
+                    "fields": {
+                        "suggest": {
+                            "type": "completion",
+                            "analyzer": "standard",
+                            "search_analyzer": "standard",
+                        }
+                    },
+                },
                 "vote_average": {"type": "double"},
                 "vote_count": {"type": "integer"},
                 "cast": {"type": "keyword"},
@@ -50,34 +58,32 @@ def load_movies_to_es(csv_path: str, index_name: str) -> None:
         raise FileNotFoundError(f"File not found: {csv_path}")
 
     try:
-        df = pd.read_csv(csv_path)
-
         # Ensures Elasticsearch index is created
         if es.indices.exists(index=index_name):
             es.indices.delete(index=index_name)
         es.indices.create(index=index_name, body=mapping)
-        # es.indices.create(index=index_name)
 
         # Bulk upload data
         actions: list = []
 
+        # Load the CSV file
+        df = pd.read_csv(csv_path)
+
+        # Convert columns to appropriate data types
+        df["genres"] = df["genres"].apply(lambda x: x.split(" "))
+        df["keywords"] = df["keywords"].apply(lambda x: x.split(" "))
+        df["production_companies"] = df["production_companies"].apply(ast.literal_eval)
+        df["production_countries"] = df["production_countries"].apply(ast.literal_eval)
+        df["spoken_languages"] = df["spoken_languages"].apply(ast.literal_eval)
+        df["cast"] = df["cast"].apply(lambda x: x.split(" "))
+        df["crew"] = df["crew"].apply(ast.literal_eval)
+
         for i, row in df.iterrows():
             source_dict = row.to_dict()
-
-            # Convert variables into appropriate types
-            source_dict["genres"] = source_dict["genres"].split(" ")
-            source_dict["keywords"] = source_dict["keywords"].split(" ")
-            source_dict["production_companies"] = ast.literal_eval(
-                source_dict["production_companies"]
-            )
-            source_dict["production_countries"] = ast.literal_eval(
-                source_dict["production_countries"]
-            )
-            source_dict["spoken_languages"] = ast.literal_eval(
-                source_dict["spoken_languages"]
-            )
-            source_dict["cast"] = source_dict["cast"].split(" ")    
-            source_dict["crew"] = ast.literal_eval(source_dict["crew"])
+            source_dict["suggest"] = {
+                "input": source_dict["title"].split(),
+                "weight": float(source_dict["popularity"]),
+            }
 
             action = {
                 "_index": index_name,

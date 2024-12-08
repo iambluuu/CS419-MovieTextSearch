@@ -57,14 +57,10 @@ def RC_search_movie(
 
         # Add filters
         if search_query.genres:
-            query["bool"]["filter"].append(
-                {"terms": {"genres": search_query.genres}}
-            )
+            query["bool"]["filter"].append({"terms": {"genres": search_query.genres}})
 
         if search_query.cast:
-            query["bool"]["filter"].append(
-                {"terms": {"cast": search_query.cast}}
-            )
+            query["bool"]["filter"].append({"terms": {"cast": search_query.cast}})
         if search_query.director:
             query["bool"]["filter"].append(
                 {"term": {"director.keyword": search_query.director}}
@@ -98,7 +94,7 @@ def RC_search_movie(
         }
 
         # Execute the search
-        response = es.search(index="movies", body=body)
+        response = es.search(index=index_name, body=body)
         hits = response["hits"]["hits"]
 
         # Extract the results
@@ -135,5 +131,72 @@ def RC_search_movie_id(id: str, index_name: str) -> dict:
         results = [hit["_source"] for hit in hits]
 
         return {"results": results}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def RC_get_all_genres(index_name: str) -> dict:
+    """Get all genres from Elasticsearch.
+
+    Args:
+        index_name (str): Name of the Elasticsearch index.
+
+    Returns:
+        dict: Search results.
+    """
+
+    body = {
+        "size": 0,
+        "aggs": {
+            "genres": {
+                "terms": {
+                    "field": "genres",
+                    "size": 1000,
+                }
+            }
+        },
+    }
+
+    try:
+        response = es.search(index=index_name, body=body)
+        genres = response["aggregations"]["genres"]["buckets"]
+
+        return {"genres": [genre["key"] for genre in genres]}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def RC_get_suggestions(index_name: str, query: str) -> dict:
+    """Get suggestions from Elasticsearch.
+
+    Args:
+        index_name (str): Name of the Elasticsearch index.
+        query (str): Search query.
+
+    Returns:
+        dict: Search results.
+    """
+
+    body = {
+        "suggest": {
+            "movie-suggest": {
+                "prefix": query,
+                "completion": {
+                    "field": "title.suggest",
+                    "size": 10,
+                },
+            }
+        }
+    }
+
+    try:
+        response = es.search(index=index_name, body=body)
+        suggestions = response["suggest"]["movie-suggest"][0]["options"]
+
+        return {
+            "suggestions": [
+                suggestion["_source"]["title"] for suggestion in suggestions
+            ]
+        }
     except Exception as e:
         return {"error": str(e)}
