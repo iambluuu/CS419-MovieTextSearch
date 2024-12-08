@@ -27,7 +27,7 @@ def __init__() -> None:
             and os.path.getmtime(dataset_path) > os.path.getmtime(cleaned_dataset_path)
         ):
             log.info("Preprocessing the dataset...")
-            preprocess_data(dataset_path, cleaned_dataset_path, -1)
+            preprocess_data(dataset_path, cleaned_dataset_path)
 
         # Load the cleaned dataset to Elasticsearch
         log.info("Loading the dataset to Elasticsearch...")

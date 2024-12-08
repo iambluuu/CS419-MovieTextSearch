@@ -1,4 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+"""This module contains the routes for movies.
+
+Function names prefixed with:
+    - `RX_` are for request handlers. Where X is the HTTP method (G, P, D, U).
+    - `RC_` are for controller handlers.
+"""
+
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, Query
 from elasticsearch import Elasticsearch
 
 from ..controllers.movies import *
@@ -8,7 +16,7 @@ movie_router = APIRouter()
 
 
 @movie_router.get("/search")
-async def Rsearch_movie(request: MovieSearchRequest = Depends()):
+async def RG_search_movie(request: Annotated[MovieSearchRequest, Query()]):
     """Search movie plot in Elasticsearch.
 
     Args:
@@ -17,7 +25,25 @@ async def Rsearch_movie(request: MovieSearchRequest = Depends()):
     Returns:
         dict: Search results.
     """
-    response: dict = Csearch_movie(request)
+    response: dict = RC_search_movie(request)
+
+    if "error" in response:
+        raise HTTPException(status_code=400, detail=response["error"])
+
+    return response
+
+
+@movie_router.post("/search")
+async def RP_search_movie(request: MovieSearchRequest):
+    """Search movie plot in Elasticsearch.
+
+    Args:
+        request (MovieSearchRequest): Search request.
+
+    Returns:
+        dict: Search results.
+    """
+    response: dict = RC_search_movie(request)
 
     if "error" in response:
         raise HTTPException(status_code=400, detail=response["error"])
@@ -26,7 +52,7 @@ async def Rsearch_movie(request: MovieSearchRequest = Depends()):
 
 
 @movie_router.get("/{id}")
-async def Rget_movie(id: str):
+async def RG_get_movie(id: str):
     """Get movie by ID.
 
     Args:
@@ -36,7 +62,7 @@ async def Rget_movie(id: str):
         dict: Movie details.
     """
 
-    response: dict = Csearch_movie_id(id, "movies")
+    response: dict = RC_search_movie_id(id, "movies")
 
     if "error" in response:
         raise HTTPException(status_code=400, detail=response["error"])

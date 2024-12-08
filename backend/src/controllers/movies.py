@@ -1,10 +1,16 @@
 from typing import Dict
+import logging
 
 from ..services.elastic import es
 from ..models.movies import MovieSearchRequest
 
 
-def Csearch_movie(search_query: MovieSearchRequest, index_name: str = "movies") -> dict:
+log = logging.getLogger(name="MovieApp")
+
+
+def RC_search_movie(
+    search_query: MovieSearchRequest, index_name: str = "movies"
+) -> dict:
     """Search movies with given filters/sort in Elasticsearch.
 
     The search query can include the following parameters:
@@ -25,6 +31,8 @@ def Csearch_movie(search_query: MovieSearchRequest, index_name: str = "movies") 
     Returns:
         dict: Search results.
     """
+
+    log.info(f"Searching movies with query: {search_query.dict()}")
 
     try:
         # Base query
@@ -50,11 +58,12 @@ def Csearch_movie(search_query: MovieSearchRequest, index_name: str = "movies") 
         # Add filters
         if search_query.genres:
             query["bool"]["filter"].append(
-                {"terms": {"genres.keyword": search_query.genres}}
+                {"terms": {"genres": search_query.genres}}
             )
+
         if search_query.cast:
             query["bool"]["filter"].append(
-                {"terms": {"cast.keyword": search_query.cast}}
+                {"terms": {"cast": search_query.cast}}
             )
         if search_query.director:
             query["bool"]["filter"].append(
@@ -75,7 +84,7 @@ def Csearch_movie(search_query: MovieSearchRequest, index_name: str = "movies") 
         # Sorting
         sort_field = (
             search_query.sort_by
-            if search_query.sort_by in ["rank", "popularity", "release_date"]
+            if search_query.sort_by in ["popularity", "release_date"]
             else "popularity"
         )
         order = search_query.order if search_query.order in ["asc", "desc"] else "desc"
@@ -105,7 +114,7 @@ def Csearch_movie(search_query: MovieSearchRequest, index_name: str = "movies") 
         return {"error": str(e)}
 
 
-def Csearch_movie_id(id: str, index_name: str) -> dict:
+def RC_search_movie_id(id: str, index_name: str) -> dict:
     """Search movie with a specific ID in Elasticsearch.
 
     Args:
