@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import pandas as pd
@@ -23,17 +24,23 @@ def load_movies_to_es(csv_path: str, index_name: str) -> None:
     mapping = {
         "mappings": {
             "properties": {
-                "budget": {"type": "float"},
-                "genres": {"type": "text"},
-                "homepage": {"type": "keyword"},
+                "index": {"type": "integer"},
+                "budget": {"type": "double"},
+                "genres": {"type": "keyword"},
                 "keywords": {"type": "text"},
                 "original_language": {"type": "keyword"},
+                "original_title": {"type": "text"},
                 "overview": {"type": "text"},
+                "popularity": {"type": "double"},
                 "release_date": {"type": "date", "format": "yyyy-MM-dd"},
-                "runtime": {"type": "float"},
-                "vote_average": {"type": "float"},
-                "vote_count": {"type": "integer"},
+                "revenue": {"type": "double"},
+                "runtime": {"type": "double"},
+                "status": {"type": "keyword"},
+                "tagline": {"type": "text"},
                 "title": {"type": "text"},
+                "vote_average": {"type": "double"},
+                "vote_count": {"type": "integer"},
+                "cast": {"type": "keyword"},
                 "director": {"type": "text"},
             }
         }
@@ -49,20 +56,41 @@ def load_movies_to_es(csv_path: str, index_name: str) -> None:
         if es.indices.exists(index=index_name):
             es.indices.delete(index=index_name)
         es.indices.create(index=index_name, body=mapping)
+        # es.indices.create(index=index_name)
 
         # Bulk upload data
         actions: list = []
 
         for i, row in df.iterrows():
+            source_dict = row.to_dict()
+
+            # Convert variables into appropriate types
+            source_dict["genres"] = source_dict["genres"].split(" ")
+            source_dict["keywords"] = source_dict["keywords"].split(" ")
+            source_dict["production_companies"] = ast.literal_eval(
+                source_dict["production_companies"]
+            )
+            source_dict["production_countries"] = ast.literal_eval(
+                source_dict["production_countries"]
+            )
+            source_dict["spoken_languages"] = ast.literal_eval(
+                source_dict["spoken_languages"]
+            )
+            source_dict["cast"] = source_dict["cast"].split(" ")    
+            source_dict["crew"] = ast.literal_eval(source_dict["crew"])
+
             action = {
                 "_index": index_name,
                 "_id": i,
-                "_source": row.to_dict(),
+                "_source": source_dict,
             }
             actions.append(action)
 
-        if len(actions) > 0:
-            helpers.bulk(es, actions, index=index_name)
+        helpers.bulk(es, actions, index=index_name, raise_on_error=False)
+
+        # Preview the mapping
+        template = es.indices.get_mapping(index=index_name)
+        print(template)
 
     except Exception as e:
         raise e
