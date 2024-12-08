@@ -6,6 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 
 from src.routes.movies import movie_router
+from src.routes.es import es_router
 
 
 class Server:
@@ -55,6 +56,7 @@ class Server:
 
         # Add the movie search route
         self.app.include_router(movie_router, prefix="/movies", tags=["movies"])
+        self.app.include_router(es_router, prefix="/es", tags=["elasticsearch"])
 
         return
 
