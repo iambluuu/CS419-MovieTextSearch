@@ -14,4 +14,9 @@ config = {
     "ES_PORT": os.getenv("ELASTICSEARCH_PORT") or "9200",
     "ES_CLIENT": os.getenv("ELASTICSEARCH_CLIENT"),
     "ES_PASSWORD": os.getenv("ELASTICSEARCH_PASSWORD"),
+    # MongoDB configuration
+    "MONGODB_URI": os.getenv("MONGODB_URI"),
+    "MONGODB_USERNAME": os.getenv("MONGODB_USERNAME"),
+    "MONGODB_PASSWORD": os.getenv("MONGODB_PASSWORD"),
+    "MONGODB_CLUSTERNAME": os.getenv("MONGODB_CLUSTERNAME"),
 }

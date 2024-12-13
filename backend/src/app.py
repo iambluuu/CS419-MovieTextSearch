@@ -7,6 +7,7 @@ from src.services.load_movies import load_movies_to_es
 from src.utils.preprocess import preprocess_data
 from src.utils.config import config
 from src.utils import logconfig
+from src.utils.loadintodb import load_data_into_db
 from src.server import Server
 
 log = logging.getLogger(name="MovieApp")
@@ -33,10 +34,19 @@ def __init__() -> None:
         log.info("Loading the dataset to Elasticsearch...")
         load_movies_to_es(cleaned_dataset_path, "movies")
         log.info("Dataset loaded successfully!")
+
+
+        # Load the dataset into MongoDB
+        log.info("Loading the dataset into MongoDB if needed...")
+        cleaned_dataset_path = "./src/data/merged_movies_dataset.xlsx"
+        load_data_into_db(cleaned_dataset_path)
+        log.info("Dataset loaded successfully into MongoDB!")
+
+
     except Exception as e:
         log.error(f"An error occurred: {e}")
         raise e
-
+    
 
 if __name__ == "__main__":
     """Run the FastAPI application."""
