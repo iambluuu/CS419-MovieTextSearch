@@ -6,11 +6,8 @@ from pymongo import MongoClient
 from src.utils.config import config
 from src.utils import logconfig
 
-
 log = logging.getLogger(name="MovieApp")
 logconfig.setup_logging()
-
-
 
 def load_data_into_db(data_path: str) -> None:
     """Load the dataset into MongoDB.

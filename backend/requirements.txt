@@ -3,3 +3,5 @@ uvicorn
 elasticsearch
 python-dotenv
 pandas
+pymongo
+wget

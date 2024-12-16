@@ -6,6 +6,7 @@ from ..utils.config import config
 
 # Initialize Elasticsearch client
 logging.info("Initializing Elasticsearch client...")
+print(config)
 es = Elasticsearch(
     [{"host": config["ES_HOST"], "port": int(config["ES_PORT"]), "scheme": "http"}],
     basic_auth=(config["ES_CLIENT"], config["ES_PASSWORD"]),
