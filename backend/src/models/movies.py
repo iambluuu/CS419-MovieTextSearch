@@ -12,9 +12,7 @@ class MovieSearchRequest(BaseModel):
     cast: Optional[List[str]] = Field(None, description="Filter by cast members.")
     director: Optional[str] = Field(None, description="Filter by director.")
     release_year: Optional[int] = Field(None, description="Filter by release year.")
-    sort_by: Optional[str] = Field(
-        "popularity", description="Field to sort the results by."
-    )
+    sort_by: Optional[str] = Field(None, description="Field to sort the results by.")
     order: Optional[str] = Field(
         "desc", description="Order of sorting: 'asc' or 'desc'."
     )

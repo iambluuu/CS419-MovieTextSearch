@@ -47,18 +47,33 @@ def RC_search_movie(
             "bool": {
                 "must": [],
                 "filter": [],
+                "should": [],
             }
         }
 
         # Add full-text search if query exists
         if search_query.query:
-            query["bool"]["must"].append(
+            # Title Field
+            query["bool"]["should"].append(
                 {
-                    "multi_match": {
-                        "query": search_query.query,
-                        "fields": ["title^3", "plot_synopsis"],
+                    "match_phrase": {
+                        "title": {
+                            "query": "{}".format(search_query.query),
+                            "boost": 15,
+                        }
                     }
-                }
+                },
+            )
+            # Plot_synopsis Field
+            query["bool"]["should"].append(
+                {
+                    "match": {
+                        "plot_synopsis": {
+                            "query": "{}".format(search_query.query),
+                            "boost": 5,
+                        }
+                    }
+                },
             )
 
         # Add filters
@@ -94,12 +109,11 @@ def RC_search_movie(
         # Search request body
         body = {
             "query": query,
-            "sort": [{sort_field: {"order": order}}]
-            if sort_field
-            else [{"_score": "desc"}],
             "from": (search_query.page - 1) * search_query.size,
             "size": search_query.size,
         }
+        if sort_field:
+            body["sort"] = [{sort_field: {"order": order}}]
 
         # Execute the search
         response = es.search(index=index_name, body=body)
@@ -107,6 +121,10 @@ def RC_search_movie(
 
         # Extract the results
         results = [hit["_source"] for hit in hits]
+
+        # Print score of the each result
+        for hit in hits:
+            log.info(f"Score: {hit['_score']}")
 
         return {
             "total": response["hits"]["total"]["value"],
