@@ -56,23 +56,37 @@ def RC_search_movie(
             # Title Field
             query["bool"]["should"].append(
                 {
-                    "match_phrase": {
+                    "match": {
                         "title": {
                             "query": "{}".format(search_query.query),
-                            "boost": 15,
+                            "fuzziness": "AUTO",
+                            "operator": "and",
+                            "boost": 3,
                         }
                     }
                 },
             )
+
+            query["bool"]["should"].append(
+                {
+                    "match_phrase": {
+                        "title": {
+                            "query": "{}".format(search_query.query),
+                            "boost": 2,
+                        }
+                    }
+                },
+            )
+
             # Plot_synopsis Field
             query["bool"]["should"].append(
                 {
                     "match": {
                         "plot_synopsis": {
                             "query": "{}".format(search_query.query),
-                            "boost": 5,
+                            "operator": "and",
                         }
-                    }
+                    },
                 },
             )
 
