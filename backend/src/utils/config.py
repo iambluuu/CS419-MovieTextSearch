@@ -6,7 +6,8 @@ load_dotenv(".env")
 # Interface
 config = {
     # Movie dataset
-    "DATA_PATH": "src/data/movies.csv",
+    "DATA_PATH": "src/data/merged_movies_dataset.xlsx",
+    "CLEANED_DATA_PATH": "src/data/cleaned.xlsx",
     # API configuration
     "API_PORT": os.getenv("PORT") or 3001,
     # Elasticsearch configuration

@@ -20,7 +20,7 @@ def __init__() -> None:
     try:
         # Path for dataset and cleaned dataset
         dataset_path = config["DATA_PATH"]
-        cleaned_dataset_path = "./src/data/cleaned.csv"
+        cleaned_dataset_path = config["CLEANED_DATA_PATH"]
 
         # Check if preprocessing is required
         if not os.path.exists(cleaned_dataset_path) or (
@@ -28,25 +28,23 @@ def __init__() -> None:
             and os.path.getmtime(dataset_path) > os.path.getmtime(cleaned_dataset_path)
         ):
             log.info("Preprocessing the dataset...")
-            preprocess_data(dataset_path, cleaned_dataset_path, -1)
+            preprocess_data(dataset_path, cleaned_dataset_path)
 
         # Load the cleaned dataset to Elasticsearch
         log.info("Loading the dataset to Elasticsearch...")
         load_movies_to_es(cleaned_dataset_path, "movies")
         log.info("Dataset loaded successfully!")
 
-
         # Load the dataset into MongoDB
-        log.info("Loading the dataset into MongoDB if needed...")
-        cleaned_dataset_path = "./src/data/merged_movies_dataset.xlsx"
-        load_data_into_db(cleaned_dataset_path)
-        log.info("Dataset loaded successfully into MongoDB!")
-
+        # log.info("Loading the dataset into MongoDB if needed...")
+        # cleaned_dataset_path = "./src/data/merged_movies_dataset.xlsx"
+        # load_data_into_db(cleaned_dataset_path)
+        # log.info("Dataset loaded successfully into MongoDB!")
 
     except Exception as e:
         log.error(f"An error occurred: {e}")
         raise e
-    
+
 
 if __name__ == "__main__":
     """Run the FastAPI application."""

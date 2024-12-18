@@ -18,49 +18,35 @@ def preprocess_data(data_path: str, save_path: str, sample: int = 500) -> None:
 
     Raises:
         FileNotFoundError: If the dataset is not found at the specified path.
+        ValueError: If the file format is not supported.
     """
 
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset not found at {data_path}")
 
     # Load the dataset
-    if sample > 0:
-        df = (
-            pd.read_csv(data_path)
-            .sample(sample, random_state=42)
-            .reset_index(drop=True)
-        )
+    if data_path.endswith(".csv"):
+        df = pd.read_csv(data_path, encoding="utf-8")
+
+        if sample >= 0:
+            df = df.sample(sample, random_state=42).reset_index(drop=True)
+    elif data_path.endswith(".xlsx"):
+        df = pd.read_excel(data_path)
+
+        if sample >= 0:
+            df = df.sample(sample, random_state=42).reset_index(drop=True)
     else:
-        df = pd.read_csv(data_path)
+        raise ValueError("File format not supported.")
 
     # Clean the dataset
-    df.fillna(
-        {
-            "budget": 0,
-            "genres": "Unknown",
-            "homepage": "Unknown",
-            "keywords": "Unknown",
-            "original_language": "Unknown",
-            "original_title": "Unknown",
-            "overview": "Unknown",
-            "popularity": 0.0,
-            "production_companies": "[]",
-            "production_countries": "[]",
-            "release_date": "01/01/1970",
-            "revenue": 0,
-            "runtime": 0,
-            "spoken_languages": "[]",
-            "status": "Unknown",
-            "tagline": "Unknown",
-            "title": "Unknown",
-            "vote_average": 0.0,
-            "vote_count": 0,
-            "cast": "Unknown",
-            "crew": "[]",
-            "director": "Unknown",
-        },
-        inplace=True,
-    )
+
+    ## Drop the rows with missing values
+    df.dropna(inplace=True)
 
     # Save the cleaned dataset
-    df.to_csv(save_path, index=False)
+    if save_path.endswith(".csv"):
+        df.to_csv(save_path, index=False)
+    elif save_path.endswith(".xlsx"):
+        df.to_excel(save_path, index=False)
+    else:
+        raise ValueError("File format not supported.")
