@@ -39,9 +39,32 @@ def preprocess_data(data_path: str, save_path: str, sample: int = 500) -> None:
         raise ValueError("File format not supported.")
 
     # Clean the dataset
-
-    ## Drop the rows with missing values
-    df.dropna(inplace=True)
+    ## Fill missing values
+    df.fillna(
+        {
+            "id": -1,
+            "title": "Unknown",
+            "vote_average": 0.0,
+            "vote_count": 0,
+            "status": "Unknown",
+            "release_date": "Unknown",
+            "revenue": 0,
+            "runtime": 0,
+            "budget": 0,
+            "original_language": "Unknown",
+            "poster_path": "Unknown",
+            "genres": "Unknown",
+            "production_companies": "Unknown",
+            "production_countries": "Unknown",
+            "spoken_languages": "Unknown",
+            "cast": "Unknown",
+            "director": "Unknown",
+            "imdb_rating": 0.0,
+            "imdb_votes": 0,
+            "plot_synopsis": "Unknown",
+        },
+        inplace=True,
+    )
 
     # Save the cleaned dataset
     if save_path.endswith(".csv"):

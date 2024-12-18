@@ -34,6 +34,13 @@ def RC_search_movie(
 
     log.info(f"Searching movies with query: {search_query.dict()}")
 
+    if search_query.size is None:
+        search_query.size = 10
+    if search_query.page is None:
+        search_query.page = 1
+
+    print(search_query.dict())
+
     try:
         # Base query
         query: Dict = {
@@ -49,8 +56,7 @@ def RC_search_movie(
                 {
                     "multi_match": {
                         "query": search_query.query,
-                        "fields": ["title^3", "overview", "cast", "director"],
-                        "type": "best_fields",
+                        "fields": ["title^3", "plot_synopsis"],
                     }
                 }
             )
@@ -81,14 +87,16 @@ def RC_search_movie(
         sort_field = (
             search_query.sort_by
             if search_query.sort_by in ["popularity", "release_date"]
-            else "popularity"
+            else None
         )
         order = search_query.order if search_query.order in ["asc", "desc"] else "desc"
 
         # Search request body
         body = {
             "query": query,
-            "sort": [{sort_field: {"order": order}}],
+            "sort": [{sort_field: {"order": order}}]
+            if sort_field
+            else [{"_score": "desc"}],
             "from": (search_query.page - 1) * search_query.size,
             "size": search_query.size,
         }

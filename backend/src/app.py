@@ -14,6 +14,34 @@ log = logging.getLogger(name="MovieApp")
 logconfig.setup_logging()
 
 
+mapping = {
+    "mappings": {
+        "properties": {
+            "id": {"type": "integer"},
+            "title": {"type": "text"},
+            "vote_average": {"type": "float"},
+            "vote_count": {"type": "integer"},
+            "status": {"type": "keyword"},
+            "release_date": {"type": "date"},
+            "revenue": {"type": "long"},
+            "runtime": {"type": "integer"},
+            "budget": {"type": "long"},
+            "original_language": {"type": "keyword"},
+            "poster_path": {"type": "text"},
+            "genres": {"type": "keyword"},
+            "production_companies": {"type": "keyword"},
+            "production_countries": {"type": "keyword"},
+            "spoken_languages": {"type": "keyword"},
+            "cast": {"type": "keyword"},
+            "director": {"type": "keyword"},
+            "imdb_rating": {"type": "float"},
+            "imdb_votes": {"type": "integer"},
+            "plot_synopsis": {"type": "text"},
+        }
+    }
+}
+
+
 def __init__() -> None:
     """Initialize the server."""
 
@@ -28,11 +56,11 @@ def __init__() -> None:
             and os.path.getmtime(dataset_path) > os.path.getmtime(cleaned_dataset_path)
         ):
             log.info("Preprocessing the dataset...")
-            preprocess_data(dataset_path, cleaned_dataset_path)
+            preprocess_data(dataset_path, cleaned_dataset_path, -1)
 
         # Load the cleaned dataset to Elasticsearch
         log.info("Loading the dataset to Elasticsearch...")
-        load_movies_to_es(cleaned_dataset_path, "movies")
+        load_movies_to_es(cleaned_dataset_path, "movies", mapping=mapping)
         log.info("Dataset loaded successfully!")
 
         # Load the dataset into MongoDB

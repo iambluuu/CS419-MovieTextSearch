@@ -37,6 +37,32 @@ def format_data2(df: pd.DataFrame) -> pd.DataFrame:
     )
     df["spoken_languages"] = df["spoken_languages"].apply(lambda x: x.split(","))
     df["cast"] = df["cast"].apply(lambda x: x.split(","))
+    df["director"] = df["director"].apply(lambda x: x.split(","))
+
+    def calculate_popularity_score(
+        df: pd.DataFrame, m: float, C: float
+    ) -> pd.DataFrame:
+        """Calculate the popularity score based on the IMDB formula.
+
+        Args:
+            df (pd.DataFrame): DataFrame containing the movies data.
+            m (float): Minimum votes required to be listed in the chart.
+            C (float): Mean vote across the whole report.
+
+        Returns:
+            pd.DataFrame: DataFrame with the popularity score.
+        """
+        df["popularity"] = (
+            (df["vote_count"] * df["vote_average"])
+            + (df["imdb_votes"] * df["imdb_rating"])
+            + (m * C)
+        ) / (df["vote_count"] + df["imdb_votes"] + m)
+        return df
+
+    # Calculate the popularity score
+    m = float(df["vote_count"].quantile(0.90))
+    C = float(df["vote_average"].mean())
+    df = calculate_popularity_score(df, m, C)
 
     return df
 
@@ -59,14 +85,18 @@ def compute_hash(file_path: str) -> str:
 
 
 def load_movies_to_es(
-    panda_path: str, index_name: str, format_column: Callable | None = format_data2
+    panda_path: str,
+    index_name: str,
+    format_column: Callable | None = format_data2,
+    mapping: dict | None = None,
 ) -> None:
     """Load movies data to Elasticsearch.
 
     Args:
         panda_path (str): Path to the Pandas readable file.
         index_name (str): Name of the Elasticsearch index.
-        format_column (, optional): Function to format columns. Defaults to None.
+        format_column (Callable, optional): Function to format columns. Defaults to None.
+        mapping (dict, optional): Mapping for the Elasticsearch index. Defaults to None.
 
     Returns:
         None
@@ -97,7 +127,7 @@ def load_movies_to_es(
         # Ensures Elasticsearch index is created
         if es.indices.exists(index=index_name):
             es.indices.delete(index=index_name)
-        es.indices.create(index=index_name)
+        es.indices.create(index=index_name, body=mapping)
 
         # Bulk upload data
         actions: list = []
@@ -118,7 +148,7 @@ def load_movies_to_es(
             source_dict = row.to_dict()
             source_dict["suggest"] = {
                 "input": source_dict["title"].split(" "),
-                "weight": float(source_dict["vote_average"]),
+                "weight": float(source_dict["popularity"]),
             }
 
             action = {
