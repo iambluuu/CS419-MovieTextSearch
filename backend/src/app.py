@@ -42,7 +42,16 @@ mapping = {
     "mappings": {
         "properties": {
             "id": {"type": "integer"},
-            "title": {"type": "text"},
+            "title": {
+                "type": "text",
+                "fields": {
+                    "suggest": {
+                        "type": "completion",
+                        "analyzer": "standard",
+                        "search_analyzer": "standard",
+                    },
+                },
+            },
             "vote_average": {"type": "float"},
             "vote_count": {"type": "integer"},
             "status": {"type": "keyword"},
