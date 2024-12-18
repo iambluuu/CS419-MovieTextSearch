@@ -53,8 +53,9 @@ def load_data_into_db(data_path: str) -> None:
     
 
     # If the collection already exists, don't insert the data
-    if collection.count_documents({}) > 0:
-        log.info("Data already exists in MongoDB collection. Skipping insertion.")
+    if collection.estimated_document_count() > 0:
+        log.info("Data already exists in MongoDB collection 'your_collection_name'. Skipping insertion.")
+        client.close()
         return
 
 
