@@ -82,10 +82,16 @@ def RC_search_movie(
 
         if search_query.cast:
             query["bool"]["filter"].append({"terms": {"cast": search_query.cast}})
+
         if search_query.director:
             query["bool"]["filter"].append(
-                {"term": {"director": search_query.director}}
+                {
+                    "wildcard": {
+                        "director": f"*{search_query.director}*",
+                    }
+                }
             )
+
         if search_query.release_year:
             query["bool"]["filter"].append(
                 {
