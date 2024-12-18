@@ -15,6 +15,30 @@ logconfig.setup_logging()
 
 
 mapping = {
+    "settings": {
+        "analysis": {
+            "tokenizer": {
+                "edge_ngram_tokenizer": {
+                    "type": "edge_ngram",
+                    "min_gram": 3,
+                    "max_gram": 20,
+                    "token_chars": ["letter", "digit"],
+                },
+            },
+            "analyzer": {
+                "default": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "filter": ["lowercase", "asciifolding"],
+                },
+                "edge_ngram_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "edge_ngram_tokenizer",
+                    "filter": ["lowercase"],
+                },
+            },
+        }
+    },
     "mappings": {
         "properties": {
             "id": {"type": "integer"},
@@ -38,7 +62,7 @@ mapping = {
             "imdb_votes": {"type": "integer"},
             "plot_synopsis": {"type": "text"},
         }
-    }
+    },
 }
 
 
