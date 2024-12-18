@@ -84,7 +84,7 @@ def RC_search_movie(
             query["bool"]["filter"].append({"terms": {"cast": search_query.cast}})
         if search_query.director:
             query["bool"]["filter"].append(
-                {"term": {"director.keyword": search_query.director}}
+                {"term": {"director": search_query.director}}
             )
         if search_query.release_year:
             query["bool"]["filter"].append(
@@ -203,6 +203,8 @@ def RC_get_suggestions(index_name: str, query: str) -> dict:
         dict: Search results.
     """
 
+    # Search for unique suggestions
+
     body = {
         "suggest": {
             "movie-suggest": {
@@ -210,9 +212,10 @@ def RC_get_suggestions(index_name: str, query: str) -> dict:
                 "completion": {
                     "field": "title.suggest",
                     "size": 10,
+                    "skip_duplicates": True,
                 },
             }
-        }
+        },
     }
 
     try:

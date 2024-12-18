@@ -50,6 +50,7 @@ mapping = {
                         "analyzer": "standard",
                         "search_analyzer": "standard",
                     },
+                    "keyword": {"type": "keyword"},
                 },
             },
             "vote_average": {"type": "float"},
