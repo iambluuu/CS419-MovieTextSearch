@@ -30,14 +30,14 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
 def format_data2(df: pd.DataFrame) -> pd.DataFrame:
     df["genres"] = df["genres"].apply(lambda x: x.split(","))
     df["production_companies"] = df["production_companies"].apply(
-        lambda x: x.split(",")
+        lambda x: x.split(", ")
     )
     df["production_countries"] = df["production_countries"].apply(
-        lambda x: x.split(",")
+        lambda x: x.split(", ")
     )
-    df["spoken_languages"] = df["spoken_languages"].apply(lambda x: x.split(","))
-    df["cast"] = df["cast"].apply(lambda x: x.split(","))
-    df["director"] = df["director"].apply(lambda x: x.split(","))
+    df["spoken_languages"] = df["spoken_languages"].apply(lambda x: x.split(", "))
+    df["cast"] = df["cast"].apply(lambda x: x.split(", "))
+    df["director"] = df["director"].apply(lambda x: x.split(", "))
 
     def calculate_popularity_score(
         df: pd.DataFrame, m: float, C: float
