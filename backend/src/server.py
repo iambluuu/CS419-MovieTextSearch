@@ -7,6 +7,7 @@ import uvicorn
 
 from src.routes.movies import movie_router
 from src.routes.es import es_router
+from src.routes.crawler import crawler_router
 
 
 class Server:
@@ -57,6 +58,7 @@ class Server:
         # Add the movie search route
         self.app.include_router(movie_router, prefix="/movies", tags=["movies"])
         self.app.include_router(es_router, prefix="/es", tags=["elasticsearch"])
+        self.app.include_router(crawler_router, prefix="/crawler", tags=["crawler"])
 
         return
 
