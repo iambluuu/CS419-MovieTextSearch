@@ -61,7 +61,7 @@ def RC_search_movie(
                             "query": "{}".format(search_query.query),
                             "fuzziness": "AUTO",
                             "operator": "and",
-                            "boost": 3,
+                            "boost": 5,
                         }
                     }
                 },
@@ -72,7 +72,8 @@ def RC_search_movie(
                     "match_phrase": {
                         "title": {
                             "query": "{}".format(search_query.query),
-                            "boost": 2,
+                            "boost": 10,
+                            "slop": 2,
                         }
                     }
                 },
@@ -85,10 +86,25 @@ def RC_search_movie(
                         "plot_synopsis": {
                             "query": "{}".format(search_query.query),
                             "operator": "and",
+                            "fuzziness": "AUTO",
+                            "boost": 1,
                         }
                     },
                 },
             )
+
+            query["bool"]["should"].append(
+                {
+                    "match_phrase": {
+                        "plot_synopsis": {
+                            "query": "{}".format(search_query.query),
+                            "boost": 2,
+                            "slop": 2,
+                        }
+                    },
+                }
+            )
+            query["bool"]["minimum_should_match"] = 1
 
         # Add filters
         if search_query.genres:
@@ -106,13 +122,25 @@ def RC_search_movie(
                 }
             )
 
-        if search_query.release_year:
+        if search_query.from_year:
             query["bool"]["filter"].append(
                 {
                     "range": {
                         "release_date": {
-                            "gte": f"{search_query.release_year}-01-01",
-                            "lte": f"{search_query.release_year}-12-31",
+                            "gte": f"{search_query.from_year}-01-01",
+                            "format": "yyyy-MM-dd",
+                        }
+                    }
+                }
+            )
+
+        if search_query.to_year:
+            query["bool"]["filter"].append(
+                {
+                    "range": {
+                        "release_date": {
+                            "lte": f"{search_query.to_year}-12-31",
+                            "format": "yyyy-MM-dd",
                         }
                     }
                 }
@@ -132,6 +160,9 @@ def RC_search_movie(
             "from": (search_query.page - 1) * search_query.size,
             "size": search_query.size,
         }
+
+        log.info(f"Search query: {body}")
+
         if sort_field:
             body["sort"] = [{sort_field: {"order": order}}]
 
