@@ -56,9 +56,9 @@ def search_movies():
     if genres is not None and len(genres) > 0:
         params["genres"] = genres
     if start_year is not None and start_year != year_range[0]:
-        params["start_year"] = start_year
-    if end_year is not None and start_year != year_range[1]:
-        params["end_year"] = end_year
+        params["from_year"] = start_year
+    if end_year is not None and end_year != year_range[1]:
+        params["to_year"] = end_year
     if director is not None and director.strip():
         params["director"] = director
     if casts is not None and casts.strip():
@@ -165,7 +165,7 @@ def run():
     _, col, _ = st.columns([1, 1, 1])
     submit = col.button("Search", use_container_width=True, type="primary")
 
-    if submit or (query and query != last_query and search_gui == "Clunky search box"):
+    if submit:
         st.session_state.query = query
         st.session_state.genres = st.session_state.id_genres
         st.session_state.start_year = st.session_state.id_start_year
@@ -208,7 +208,6 @@ def run():
 
     for i, id in enumerate(st.session_state.results[1]):
         result = get_movie_details(id)
-        print(result)
         with st.expander(
             f"**Result #{i + 1}: {result['title']} ({result['release_date'][:4]}) | Average Rating: {float(result['vote_average']):.2f}**",
             expanded=True,
