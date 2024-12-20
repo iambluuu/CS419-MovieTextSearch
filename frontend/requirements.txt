@@ -1,3 +1,3 @@
 streamlit
-streamlit-searchbox
 streamlit-keyup
+streamlit-searchbox
