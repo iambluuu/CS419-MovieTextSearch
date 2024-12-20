@@ -161,8 +161,6 @@ def RC_search_movie(
             "size": search_query.size,
         }
 
-        log.info(f"Search query: {body}")
-
         if sort_field:
             body["sort"] = [{sort_field: {"order": order}}]
 
@@ -172,10 +170,6 @@ def RC_search_movie(
 
         # Extract the results
         results = [hit["_source"] for hit in hits]
-
-        # Print score of the each result
-        for hit in hits:
-            log.info(f"Score: {hit['_score']}")
 
         return {
             "total": response["hits"]["total"]["value"],
