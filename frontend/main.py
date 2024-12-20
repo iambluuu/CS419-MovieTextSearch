@@ -163,7 +163,7 @@ def run():
         query = ""
 
     _, col, _ = st.columns([1, 1, 1])
-    submit = col.button("Search", use_container_width=True, type="primary")
+    submit = col.button("**Search**", use_container_width=True, type="primary")
 
     if submit:
         st.session_state.query = query
