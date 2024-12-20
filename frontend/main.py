@@ -1,8 +1,12 @@
 import streamlit as st
-from streamlit_searchbox import st_searchbox    
+from streamlit_searchbox import st_searchbox
+from st_keyup import st_keyup
 import requests
+import unicodedata
 
 api_url = "http://127.0.0.1:3001"
+image_url = "https://image.tmdb.org/t/p/w600_and_h900_bestv2"
+movie_url = "https://www.themoviedb.org/movie"
 
 def get_response(endpoint, params=None):
     try:
@@ -10,21 +14,22 @@ def get_response(endpoint, params=None):
         return response.json()
     except:
         st.error("Failed to connect to the API.")
-        return None
 
 def get_all_genres():
     response = get_response("movies/genres")
     return response["genres"]
 
 def get_suggestions(query):
-    if query is not None:
+    try:
         response = get_response("movies/suggest", {"query": query})
         response = response["suggestions"]
-    else:
+    except:
         response = []
     
     if not response or response[0].lower() != query.strip().lower():
         response.insert(0, query.strip())
+
+    response = [response[0]] + [response[i] for i in range(1, len(response)) if response[i] != response[i - 1]]
 
     return response
 
@@ -40,32 +45,61 @@ def search_movies():
         params["query"] = query
     if genres is not None and len(genres) > 0:
         params["genres"] = genres
-    if release_year is not None and release_year.strip():
-        params["release_year"] = release_year
+    if release_year is not None and release_year != (1900, 2030):
+        params["release_year"] = release_year[0]
     if director is not None and director.strip():
         params["director"] = director
     if casts is not None and casts.strip():
         params["cast"] = casts.split(",")
     print(params)
     response = get_response("movies/search", params)
-    return (response["total"], response["results"])
+    return (response["total"], [result["id"] for result in response["results"]])
+
+def get_movie_details(id):
+    return get_response(f"movies/{id}")["results"][0]
+
+def get_movie_url(id):
+    title = get_movie_details(id)["title"]
+    title = ''.join(
+        c for c in unicodedata.normalize('NFD', title)
+        if unicodedata.category(c) != 'Mn'
+    )
+    title = title.lower().replace(' ', '-')
+
+    return f"{movie_url}/{id}-{title}"
+
+def load_more():
+    st.session_state.page += 1
+    st.session_state.results[1].extend(search_movies()[1])
 
 def run():
     st.set_page_config(page_title="Movie Text Search", layout="wide")
     st.markdown("<h1 style='text-align: center;'>Movie Text Search</h1>", unsafe_allow_html=True)
 
     st.sidebar.title("Advanced Search Options")
+    search_gui = st.sidebar.selectbox("Search GUI", ["Clunky search box", "Double search box"])
     genres = st.sidebar.multiselect("Genres", get_all_genres())
-    release_year = st.sidebar.text_input("Release Year", placeholder="Enter release year")
+    release_year = st.sidebar.slider("Release Year", 1900, 2030, (1900, 2030))
     director = st.sidebar.text_input("Director", placeholder="Enter director name")
     casts = st.sidebar.text_input("Casts", placeholder="Enter cast names, separated by commas")
-    
-    query = st_searchbox(get_suggestions, "Search text for the movie (e.g., title, plot)")
+
+    last_query = st.session_state.query if "query" in st.session_state else ""
+    if search_gui == "Clunky search box":
+        query = st_searchbox(get_suggestions, label="Query", placeholder="Search text for the movie (e.g., title, plot)")
+    else:
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            query = st_keyup("Query", placeholder="Search text for the movie (e.g., title, plot)")
+        with col2:
+            query = st.selectbox("Suggestions", get_suggestions(query), help="Select a suggestion from your query")
+
+    if query is None:
+        query = ""
 
     _, col, _ = st.columns([1, 1, 1])
     submit = col.button("Search", use_container_width=True, type="primary")
     
-    if submit or query:
+    if submit or (query and query != last_query and search_gui == "Clunky search box"):
         st.session_state.query = query
         st.session_state.genres = genres
         st.session_state.release_year = release_year
@@ -77,46 +111,57 @@ def run():
     if 'results' not in st.session_state:
         return
 
-    if st.session_state.results[0] == 0:
-        st.warning("No results found.")
-        return
-
-    st.success(f"Found {st.session_state.results[0]} results.")
-    for result in st.session_state.results[1]:
-        with st.expander(f"**{result['title']} ({result['release_date'][:4]}) | Average Rating: {result['vote_average']}**", expanded=True):
-            if result["homepage"] != "Unknown":
-                st.markdown(f"## [{result['title']} ({result['release_date'][:4]})]({result['homepage']})")
-            else:
-                st.markdown(f"## {result['title']} ({result['release_date'][:4]})", unsafe_allow_html=True)
-            st.markdown(f"#### Directed by: {result['director']}", unsafe_allow_html=True)
-            st.markdown(f"**Genres:** {', '.join(result['genres'])} | **Release Date:** {result['release_date']} | **Runtime:** {result['runtime']} minutes | **Popularity:** {result['popularity']}")
-            st.markdown(f"{result['overview']}")
-
-    is_first_page = st.session_state.page == 1
-    is_last_page = st.session_state.results[0] <= st.session_state.page * 10
-
-    if is_first_page and is_last_page:
-        return
-
-    _, col1, col2 , col3, _ = st.columns([11, 5, 1, 5, 11])
-    col2.markdown(f"<p style='text-align: center; padding-top: 5px;'>{st.session_state.page}</p>", unsafe_allow_html=True)
-    if is_first_page:
-        prev_page = col1.button("Previous page", use_container_width=True, type="primary", disabled=True)
-    else:
-        prev_page = col1.button("Previous page", use_container_width=True, type="primary")
-
-    if is_last_page:
-        next_page = col3.button("Next page", use_container_width=True, type="primary", disabled=True)
-    else:
-        next_page = col3.button("Next page", use_container_width=True, type="primary")
+    searched = ""
+    if st.session_state.query:
+        searched += f"\"{st.session_state.query}\" "
+    if st.session_state.genres:
+        searched += f"in genres {', '.join(st.session_state.genres)} "
+    if st.session_state.release_year != (1900, 2030):
+        searched += f"released between {st.session_state.release_year[0]} and {st.session_state.release_year[1]} "
+    if st.session_state.director:
+        searched += f"directed by {st.session_state.director} "
+    if st.session_state.casts:
+        searched += f"with casts {', '.join(st.session_state.casts.split(','))} "
+    if not searched:
+        searched = "all movies "
+    searched = searched.strip()
     
-    if prev_page is not None and prev_page:
-        st.session_state.page -= 1
-        st.session_state.results = search_movies()
+    if st.session_state.results[0] == 0:
+        st.warning(f"No results found for {searched}.")
+        return
 
-    if next_page is not None and next_page:
-        st.session_state.page += 1
-        st.session_state.results = search_movies()
+    st.success(f"Found {st.session_state.results[0]} results for {searched}.")
+
+    for i, id in enumerate(st.session_state.results[1]):
+        result = get_movie_details(id)
+        print(result)
+        with st.expander(f"**Result #{i + 1}: {result['title']} ({result['release_date'][:4]}) | Average Rating: {float(result['vote_average']):.2f}**", expanded=True):
+            col1, col2 = st.columns([1, 4])
+            
+            if "poster_path" in result and result["poster_path"] and result["poster_path"] != "Unknown":
+                col1.image(f"{image_url}{result['poster_path']}", use_container_width=True)
+            else:
+                col1.image("https://via.placeholder.com/600x900?text=Poster+not+available", use_container_width=True)
+
+            col2.markdown(f"## [{result['title']} ({result['release_date'][:4]})]({get_movie_url(id)})", unsafe_allow_html=True)
+            col2.markdown(f"#### Directed by: {', '.join(result['director'])}", unsafe_allow_html=True)
+            col2.markdown(f"**Genres:** {', '.join(result['genres'])} | **Release Date:** {result['release_date']} | **Runtime:** {result['runtime']} minutes | **Popularity:** {float(result['popularity']):.2f}")
+
+            if "overview" in result:
+                overview = result["overview"]
+            elif "plot_synopsis" in result:
+                overview = result["plot_synopsis"]
+            overview = str(overview).strip()
+            if len(overview) > 500:
+                overview = overview[:500] + "..."
+
+            col2.markdown(f"{overview}")
+
+    if st.session_state.results[0] <= st.session_state.page * 10:
+        return
+
+    _, col, _ = st.columns([2, 1, 2])
+    col.button("Load more...", use_container_width=True, on_click=load_more)
 
 if __name__ == "__main__":
     run()
