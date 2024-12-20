@@ -58,7 +58,26 @@ Make sure you have the following installed on your system:
 
 ### Installation
 
-TBA
+**Elasticsearch**:
+ Refer to [how to run Elasticsearch locally](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html) to host a local Elasticsearch server. You should be provided with a username and a password to insert in the `.env` file.
+
+**MongoDB**: 
+Create a MongoDB cluster and insert the connection information into the backend's `.env` file.
+
+**Backend**:
+```
+$ cd backend
+$ pip install -r requirements.txt
+$ python -m src.app
+```
+
+**Frontend**:
+```
+$ cd frontend
+$ pip install -r requirements.txt
+$ streamlit run main.py
+```
+You should be automatically connected to the app through port `8501`.
 
 <!-- CONTRIBUTING -->
 ## Contributing
