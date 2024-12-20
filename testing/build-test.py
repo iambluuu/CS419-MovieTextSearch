@@ -14,7 +14,7 @@ def extract_keywords(text):
     keywords = ' '.join([token.text for token in doc if token.pos_ in ["NOUN", "PROPN", "ADJ"]])
     return keywords
 
-genai.configure(api_key="AIzaSyBlE_sCA6L6hBCZPiIUWiaTyDLEx7Q5Mro")
+genai.configure(api_key="NOTHING_TO_SEE_HERE")
 
 import re
 
