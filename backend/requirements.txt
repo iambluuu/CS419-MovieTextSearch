@@ -4,3 +4,5 @@ elasticsearch
 python-dotenv
 pandas
 pymongo
+sentence-transformers
+openpyxl

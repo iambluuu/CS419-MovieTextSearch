@@ -8,8 +8,14 @@ from elasticsearch import helpers
 from ..services.elastic import es
 from ..utils.config import config
 
-HASH_FILE = "./src/data/hash.txt"
+from sentence_transformers import SentenceTransformer
+import torch
 
+
+HASH_FILE = "./src/data/hash.txt"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using device: {device}")
+model = SentenceTransformer("all-mpnet-base-v2")
 
 def format_data(df: pd.DataFrame) -> pd.DataFrame:
     """This is for formatting the data before loading it to Elasticsearch.
@@ -26,6 +32,17 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+def encode_data(text, index = None):
+    if index is not None:
+        print(f"Encoding text at index {index}")
+    try:
+        if isinstance(text, str):
+            return model.encode(text)
+        return None
+    except Exception as e:
+        print(f"Failed to encode text: {e}")
+        return None
+    
 
 def format_data2(df: pd.DataFrame) -> pd.DataFrame:
     df["genres"] = df["genres"].apply(lambda x: x.split(", "))
@@ -63,6 +80,12 @@ def format_data2(df: pd.DataFrame) -> pd.DataFrame:
     m = float(df["vote_count"].quantile(0.90))
     C = float(df["vote_average"].mean())
     df = calculate_popularity_score(df, m, C)
+
+    # # Embed the synopsis
+    # if df.get("plot_synopsis") is not None and not df.get("synopsis_embedding", None):
+    #     df["synopsis_embedding"] = df.apply(lambda row: encode_data(row['plot_synopsis'], index=row.name), axis=1)
+    
+    print(df.head())
 
     return df
 
@@ -144,6 +167,9 @@ def load_movies_to_es(
         if format_column:
             df = format_column(df)
 
+        # write the data locally for debugging
+        # df.to_excel("movies_embedded.xlsx")
+
         for i, row in df.iterrows():
             source_dict = row.to_dict()
             source_dict["suggest"] = {
@@ -158,7 +184,8 @@ def load_movies_to_es(
             }
             actions.append(action)
 
-        helpers.bulk(es, actions, index=index_name, raise_on_error=False)
+        success, errors = helpers.bulk(es, actions, index=index_name, raise_on_error=False)
+        print(f'Success: {success} errors: {errors}')
 
         # Preview the mapping
         template = es.indices.get_mapping(index=index_name)
@@ -172,4 +199,4 @@ def load_movies_to_es(
 
 
 if __name__ == "__main__":
-    load_movies_to_es(config["CLEANED_DATA_PATH"], "movies", format_data)
+    load_movies_to_es(config["EMBEDDED_DATA_PATH"], "movies", format_data)

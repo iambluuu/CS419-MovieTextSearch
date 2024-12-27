@@ -8,6 +8,7 @@ config = {
     # Movie dataset
     "DATA_PATH": "src/data/merged_movies_dataset.xlsx",
     "CLEANED_DATA_PATH": "src/data/cleaned.xlsx",
+    "EMBEDDED_DATA_PATH": "src/data/movies_embedded.xlsx",
     # API configuration
     "API_PORT": os.getenv("PORT") or 3001,
     # Elasticsearch configuration

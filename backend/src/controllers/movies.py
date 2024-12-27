@@ -2,11 +2,10 @@ from typing import Dict
 import logging
 
 from ..services.elastic import es
+from ..services.load_movies import model
 from ..models.movies import MovieSearchRequest
 
-
 log = logging.getLogger(name="MovieApp")
-
 
 def RC_search_movie(
     search_query: MovieSearchRequest, index_name: str = "movies"
@@ -40,6 +39,9 @@ def RC_search_movie(
         search_query.page = 1
 
     print(search_query.dict())
+
+    if search_query.query:
+        synopsis_embedding = model.encode(search_query.query)
 
     try:
         # Base query
@@ -77,6 +79,18 @@ def RC_search_movie(
                         }
                     }
                 },
+            )
+
+            query["bool"]["should"].append(
+                {
+                    "knn": {
+                        "field": "synopsis_embedding",
+                        "query_vector": synopsis_embedding,
+                        "k": 10,
+                        "num_candidates": 100,
+                        "boost": 7,
+                    }
+                }
             )
 
             # Plot_synopsis Field

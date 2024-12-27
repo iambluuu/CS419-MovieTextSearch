@@ -62,6 +62,7 @@ def preprocess_data(data_path: str, save_path: str, sample: int = 500) -> None:
             "imdb_rating": 0.0,
             "imdb_votes": 0,
             "plot_synopsis": "Unknown",
+            "synopsis_embedding": [0.0] * 768,
         },
         inplace=True,
     )

@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 
 
@@ -27,7 +26,7 @@ def evaluate(queries, titles):
             continue
 
         q += 1
-        query = truncate(query)
+        # query = truncate(query)
         response = requests.get(f"http://127.0.0.1:3001/movies/search?query={query}")
         results = response.json()["results"]
         
@@ -83,5 +82,5 @@ mrr_long = sum(ranks_long) / len(ranks_long)
 print(f"MRR Keywords: {mrr_long}")
 # print(f"MRR Queries: {mrr_short}")
 
-plot_frequency(ranks_long, long_lengths, 'Reciprocal Rank vs Query Length (Binned) for Complete Queries (Truncated)')
+# plot_frequency(ranks_long, long_lengths, 'Reciprocal Rank vs Query Length (Binned) for Complete Queries (Truncated)')
 
