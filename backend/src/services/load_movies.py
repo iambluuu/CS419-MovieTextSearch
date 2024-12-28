@@ -67,7 +67,7 @@ def format_data2(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def compute_hash(file_path: str) -> str:
+def compute_hash(file_path: str, additional_str: str = "") -> str:
     """Compute the hash of the file.
 
     This function computes the hash of the file based on the file size and the last modified time.
@@ -79,7 +79,7 @@ def compute_hash(file_path: str) -> str:
         str: Hash of the file.
     """
     file_stat = os.stat(file_path)
-    metadata = (file_stat.st_size, file_stat.st_mtime)
+    metadata = (file_stat.st_size, file_stat.st_mtime, additional_str)
 
     return hashlib.md5(str(metadata).encode()).hexdigest()
 
@@ -112,7 +112,7 @@ def load_movies_to_es(
     if not (panda_path.endswith(".csv") or panda_path.endswith(".xlsx")):
         raise ValueError("File format not supported.")
 
-    new_hash = compute_hash(panda_path)
+    new_hash = compute_hash(panda_path, str(mapping))
     old_hash = ""
 
     if os.path.exists(HASH_FILE):
@@ -158,7 +158,9 @@ def load_movies_to_es(
             }
             actions.append(action)
 
-        helpers.bulk(es, actions, index=index_name, raise_on_error=False)
+        helpers.bulk(
+            es, actions, index=index_name, raise_on_error=False, chunk_size=1000
+        )
 
         # Preview the mapping
         template = es.indices.get_mapping(index=index_name)

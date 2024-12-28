@@ -8,6 +8,123 @@ from ..models.movies import MovieSearchRequest
 log = logging.getLogger(name="MovieApp")
 
 
+def build_query(search_query: MovieSearchRequest) -> Dict:
+    """Build Elasticsearch query from search query.
+
+    Args:
+        search_query (MovieSearchRequest): Search query.
+
+    Returns:
+        Dict: Elasticsearch query.
+    """
+
+    # Base query
+    query: Dict = {
+        "bool": {
+            "must": [],
+            "filter": [],
+            "should": [],
+        }
+    }
+
+    # Add full-text search if query exists
+    if search_query.query:
+        # Title Field
+        query["bool"]["should"].append(
+            {
+                "match": {
+                    "title": {
+                        "query": "{}".format(search_query.query),
+                        "fuzziness": "AUTO",
+                        "operator": "and",
+                        "boost": 5,
+                    }
+                }
+            },
+        )
+
+        query["bool"]["should"].append(
+            {
+                "match_phrase": {
+                    "title": {
+                        "query": "{}".format(search_query.query),
+                        "boost": 10,
+                        "slop": 2,
+                    }
+                }
+            },
+        )
+
+        # Plot_synopsis Field
+        query["bool"]["should"].append(
+            {
+                "match": {
+                    "plot_synopsis": {
+                        "query": "{}".format(search_query.query),
+                        "operator": "and",
+                        "fuzziness": "AUTO",
+                        "boost": 1,
+                    }
+                },
+            },
+        )
+
+        query["bool"]["should"].append(
+            {
+                "match_phrase": {
+                    "plot_synopsis": {
+                        "query": "{}".format(search_query.query),
+                        "boost": 2,
+                        "slop": 2,
+                    }
+                },
+            }
+        )
+        query["bool"]["minimum_should_match"] = 1
+
+    # Add filters
+    if search_query.genres:
+        query["bool"]["filter"].append({"terms": {"genres": search_query.genres}})
+
+    if search_query.cast:
+        query["bool"]["filter"].append({"terms": {"cast": search_query.cast}})
+
+    if search_query.director:
+        query["bool"]["filter"].append(
+            {
+                "wildcard": {
+                    "director": f"*{search_query.director}*",
+                }
+            }
+        )
+
+    if search_query.from_year:
+        query["bool"]["filter"].append(
+            {
+                "range": {
+                    "release_date": {
+                        "gte": f"{search_query.from_year}-01-01",
+                        "format": "yyyy-MM-dd",
+                    }
+                }
+            }
+        )
+
+    if search_query.to_year:
+        query["bool"]["filter"].append(
+            {
+                "range": {
+                    "release_date": {
+                        "lte": f"{search_query.to_year}-12-31",
+                        "format": "yyyy-MM-dd",
+                    }
+                }
+            }
+        )
+
+    return query
+
+
 def RC_search_movie(
     search_query: MovieSearchRequest, index_name: str = "movies"
 ) -> dict:
@@ -42,109 +159,8 @@ def RC_search_movie(
     print(search_query.dict())
 
     try:
-        # Base query
-        query: Dict = {
-            "bool": {
-                "must": [],
-                "filter": [],
-                "should": [],
-            }
-        }
-
-        # Add full-text search if query exists
-        if search_query.query:
-            # Title Field
-            query["bool"]["should"].append(
-                {
-                    "match": {
-                        "title": {
-                            "query": "{}".format(search_query.query),
-                            "fuzziness": "AUTO",
-                            "operator": "and",
-                            "boost": 5,
-                        }
-                    }
-                },
-            )
-
-            query["bool"]["should"].append(
-                {
-                    "match_phrase": {
-                        "title": {
-                            "query": "{}".format(search_query.query),
-                            "boost": 10,
-                            "slop": 2,
-                        }
-                    }
-                },
-            )
-
-            # Plot_synopsis Field
-            query["bool"]["should"].append(
-                {
-                    "match": {
-                        "plot_synopsis": {
-                            "query": "{}".format(search_query.query),
-                            "operator": "and",
-                            "fuzziness": "AUTO",
-                            "boost": 1,
-                        }
-                    },
-                },
-            )
-
-            query["bool"]["should"].append(
-                {
-                    "match_phrase": {
-                        "plot_synopsis": {
-                            "query": "{}".format(search_query.query),
-                            "boost": 2,
-                            "slop": 2,
-                        }
-                    },
-                }
-            )
-            query["bool"]["minimum_should_match"] = 1
-
-        # Add filters
-        if search_query.genres:
-            query["bool"]["filter"].append({"terms": {"genres": search_query.genres}})
-
-        if search_query.cast:
-            query["bool"]["filter"].append({"terms": {"cast": search_query.cast}})
-
-        if search_query.director:
-            query["bool"]["filter"].append(
-                {
-                    "wildcard": {
-                        "director": f"*{search_query.director}*",
-                    }
-                }
-            )
-
-        if search_query.from_year:
-            query["bool"]["filter"].append(
-                {
-                    "range": {
-                        "release_date": {
-                            "gte": f"{search_query.from_year}-01-01",
-                            "format": "yyyy-MM-dd",
-                        }
-                    }
-                }
-            )
-
-        if search_query.to_year:
-            query["bool"]["filter"].append(
-                {
-                    "range": {
-                        "release_date": {
-                            "lte": f"{search_query.to_year}-12-31",
-                            "format": "yyyy-MM-dd",
-                        }
-                    }
-                }
-            )
+        # Build the query
+        base_query = build_query(search_query)
 
         # Sorting
         sort_field = (
@@ -155,6 +171,23 @@ def RC_search_movie(
         order = search_query.order if search_query.order in ["asc", "desc"] else "desc"
 
         # Search request body
+        query = {
+            "function_score": {
+                "query": base_query,
+                "functions": [
+                    {
+                        "field_value_factor": {
+                            "field": "feedback",
+                            "factor": 1.5,
+                            "modifier": "sqrt",
+                            "missing": 1,
+                        }
+                    }
+                ],
+                "score_mode": "sum",
+            }
+        }
+
         body = {
             "query": query,
             "from": (search_query.page - 1) * search_query.size,
@@ -170,6 +203,12 @@ def RC_search_movie(
 
         # Extract the results
         results = [hit["_source"] for hit in hits]
+
+        # Log the score
+        for hit in hits:
+            log.info(
+                f"Movie: {hit['_source']['title']}, Score: {hit['_score']}, Feedback: {hit['_source'].get('feedback', 0)}"
+            )
 
         return {
             "total": response["hits"]["total"]["value"],

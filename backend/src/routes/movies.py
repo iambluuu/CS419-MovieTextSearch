@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from elasticsearch import Elasticsearch
 
 from ..controllers.movies import *
+from ..controllers.feedback import RC_feedback
 from ..models.movies import MovieSearchRequest
 
 movie_router = APIRouter()
@@ -44,6 +45,25 @@ async def RP_search_movie(request: MovieSearchRequest):
         dict: Search results.
     """
     response: dict = RC_search_movie(request)
+
+    if "error" in response:
+        raise HTTPException(status_code=400, detail=response["error"])
+
+    return response
+
+
+@movie_router.post("/feedback/{movie_id}")
+async def RP_feedback(movie_id: str, score: int = 3):
+    """Provide feedback on a movie.
+
+    Args:
+        movie_id (str): Movie ID.
+        score (int): Feedback score.
+
+    Returns:
+        dict: Feedback status.
+    """
+    response: dict = RC_feedback(movie_id, score)
 
     if "error" in response:
         raise HTTPException(status_code=400, detail=response["error"])

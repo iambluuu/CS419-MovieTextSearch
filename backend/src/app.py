@@ -71,6 +71,7 @@ mapping = {
             "imdb_rating": {"type": "float"},
             "imdb_votes": {"type": "integer"},
             "plot_synopsis": {"type": "text"},
+            "feedback": {"type": "integer", "null_value": 0},
         }
     },
 }
