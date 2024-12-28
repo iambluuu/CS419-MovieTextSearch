@@ -179,6 +179,10 @@ def RC_search_movie(
                         "script_score": {
                             "script": {
                                 "source": """
+                                if (doc['feedback'].empty) {
+                                    return 1;
+                                }
+
                                 double feedback = doc['feedback'].value;
                                 double result = 0.2 * Math.log(Math.abs(feedback) + 1);
                                 if (feedback < 0) {
