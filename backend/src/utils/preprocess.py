@@ -31,7 +31,7 @@ def preprocess_data(data_path: str, save_path: str, sample: int = 500) -> None:
         if sample >= 0:
             df = df.sample(sample, random_state=42).reset_index(drop=True)
     elif data_path.endswith(".xlsx"):
-        df = pd.read_excel(data_path)
+        df = pd.read_excel(data_path, engine="openpyxl")
 
         if sample >= 0:
             df = df.sample(sample, random_state=42).reset_index(drop=True)

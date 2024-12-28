@@ -87,8 +87,8 @@ def __init__() -> None:
 
     try:
         # Path for dataset and cleaned dataset
-        dataset_path = config["DATA_PATH"]
-        cleaned_dataset_path = config["CLEANED_DATA_PATH"]
+        dataset_path = config["EMBEDDED_DATA_PATH"]
+        cleaned_dataset_path = config["EMBEDDED_DATA_PATH"]
 
         # Check if preprocessing is required
         if not os.path.exists(cleaned_dataset_path) or (

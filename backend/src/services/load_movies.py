@@ -159,7 +159,7 @@ def load_movies_to_es(
         if panda_path.endswith(".csv"):
             df = pd.read_csv(panda_path)
         elif panda_path.endswith(".xlsx"):
-            df = pd.read_excel(panda_path)
+            df = pd.read_excel(panda_path, engine="openpyxl")
         else:
             raise ValueError("File format not supported.")
 
@@ -184,8 +184,8 @@ def load_movies_to_es(
             }
             actions.append(action)
 
-        success, errors = helpers.bulk(es, actions, index=index_name, raise_on_error=False)
-        print(f'Success: {success} errors: {errors}')
+        # success, errors = helpers.bulk(es, actions, index=index_name, raise_on_error=False)
+        # print(f'Success: {success} errors: {errors}')
 
         # Preview the mapping
         template = es.indices.get_mapping(index=index_name)
