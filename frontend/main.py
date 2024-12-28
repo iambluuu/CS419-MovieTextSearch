@@ -4,7 +4,7 @@ from st_keyup import st_keyup
 import requests
 import unicodedata
 
-api_url = "http://127.0.0.1:3001"
+api_url = "https://fleet-massive-monkey.ngrok-free.app"
 image_url = "https://image.tmdb.org/t/p/w600_and_h900_bestv2"
 movie_url = "https://www.themoviedb.org/movie"
 year_range = (1900, 2100)
