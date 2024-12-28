@@ -176,14 +176,19 @@ def RC_search_movie(
                 "query": base_query,
                 "functions": [
                     {
-                        "field_value_factor": {
-                            "field": "feedback",
-                            "factor": 1.5,
-                            "modifier": "sqrt",
-                            "missing": 1,
+                        "script_score": {
+                            "script": {
+                                "source": """
+                                double feedback = doc['feedback'].value;
+                                double result = Math.exp(feedback);
+                                return result;
+                                """
+                            }
                         }
                     }
                 ],
+                "boost_mode": "sum",
+                "max_boost": 100,
                 "score_mode": "sum",
             }
         }

@@ -124,22 +124,6 @@ async def RG_get_movie(id: str):
     return response
 
 
-@movie_router.delete("/feedback/all")
-async def RD_reset_all_feedback():
-    """Reset feedback for all movies.
-
-    Returns:
-        dict: Reset status.
-    """
-
-    response: dict = RC_reset_all_feedback("movies")
-
-    if "error" in response:
-        raise HTTPException(status_code=400, detail=response["error"])
-
-    return response
-
-
 @movie_router.delete("/feedback/{movie_id}")
 async def RD_reset_feedback(movie_id: str):
     """Reset feedback for a movie.
@@ -152,6 +136,22 @@ async def RD_reset_feedback(movie_id: str):
     """
 
     response: dict = RC_reset_feedback(movie_id, "movies")
+
+    if "error" in response:
+        raise HTTPException(status_code=400, detail=response["error"])
+
+    return response
+
+
+@movie_router.delete("/feedback/all")
+async def RD_reset_all_feedback():
+    """Reset feedback for all movies.
+
+    Returns:
+        dict: Reset status.
+    """
+
+    response: dict = RC_reset_all_feedback("movies")
 
     if "error" in response:
         raise HTTPException(status_code=400, detail=response["error"])
