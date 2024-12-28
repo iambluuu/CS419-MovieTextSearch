@@ -21,7 +21,7 @@ mapping = {
                 "edge_ngram_tokenizer": {
                     "type": "edge_ngram",
                     "min_gram": 3,
-                    "max_gram": 20,
+                    "max_gram": 10,
                     "token_chars": ["letter", "digit"],
                 },
             },
@@ -44,6 +44,7 @@ mapping = {
             "id": {"type": "integer"},
             "title": {
                 "type": "text",
+                "analyzer": "edge_ngram_analyzer",
                 "fields": {
                     "suggest": {
                         "type": "completion",
@@ -70,7 +71,7 @@ mapping = {
             "director": {"type": "keyword"},
             "imdb_rating": {"type": "float"},
             "imdb_votes": {"type": "integer"},
-            "plot_synopsis": {"type": "text"},
+            "plot_synopsis": {"type": "text", "analyzer": "english"},
             "feedback": {"type": "integer", "null_value": 0},
         }
     },
