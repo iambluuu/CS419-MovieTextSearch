@@ -180,15 +180,19 @@ def RC_search_movie(
                             "script": {
                                 "source": """
                                 double feedback = doc['feedback'].value;
-                                double result = Math.exp(feedback);
-                                return result;
+                                double result = 0.2 * Math.log(Math.abs(feedback) + 1);
+                                if (feedback < 0) {
+                                    result = -result;
+                                }
+
+                                return 1 + result;
                                 """
                             }
                         }
                     }
                 ],
-                "boost_mode": "sum",
-                "max_boost": 100,
+                "boost_mode": "multiply",
+                "max_boost": 2,
                 "score_mode": "sum",
             }
         }
