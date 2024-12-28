@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from elasticsearch import Elasticsearch
 
 from ..controllers.movies import *
-from ..controllers.feedback import RC_feedback
+from ..controllers.feedback import *
 from ..models.movies import MovieSearchRequest
 
 movie_router = APIRouter()
@@ -117,6 +117,41 @@ async def RG_get_movie(id: str):
     """
 
     response: dict = RC_search_movie_id(id, "movies")
+
+    if "error" in response:
+        raise HTTPException(status_code=400, detail=response["error"])
+
+    return response
+
+
+@movie_router.delete("/feedback/all")
+async def RD_reset_all_feedback():
+    """Reset feedback for all movies.
+
+    Returns:
+        dict: Reset status.
+    """
+
+    response: dict = RC_reset_all_feedback("movies")
+
+    if "error" in response:
+        raise HTTPException(status_code=400, detail=response["error"])
+
+    return response
+
+
+@movie_router.delete("/feedback/{movie_id}")
+async def RD_reset_feedback(movie_id: str):
+    """Reset feedback for a movie.
+
+    Args:
+        movie_id (str): Movie ID.
+
+    Returns:
+        dict: Reset status.
+    """
+
+    response: dict = RC_reset_feedback(movie_id, "movies")
 
     if "error" in response:
         raise HTTPException(status_code=400, detail=response["error"])
