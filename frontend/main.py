@@ -18,6 +18,14 @@ def get_response(endpoint, params=None):
         st.error("Failed to connect to the API.")
 
 
+def post_response(endpoint, params=None, data=None):
+    try:
+        response = requests.post(f"{api_url}/{endpoint}", params=params, json=data)
+        return response.json()
+    except:
+        st.error("Failed to connect to the API.")
+
+
 def get_all_genres():
     response = get_response("movies/genres")
     return response["genres"]
@@ -61,13 +69,16 @@ def search_movies():
         params["director"] = director
     if casts is not None and casts.strip():
         params["cast"] = casts.split(",")
-    print(params)
     response = get_response("movies/search", params)
     return (response["total"], [result["id"] for result in response["results"]])
 
 
 def get_movie_details(id):
     return get_response(f"movies/{id}")["results"][0]
+
+
+def set_movie_like(id, like):
+    return post_response(f"movies/feedback/{id}", params={"score": 5 if like else 0})
 
 
 def get_movie_url(id):
@@ -97,6 +108,7 @@ def init():
         st.session_state.casts = ""
         st.session_state.page = 1
         st.session_state.results = None
+        st.session_state.score = {}
         st.session_state.init = True
 
 
@@ -234,7 +246,9 @@ def run():
             )
             col4.markdown("")
             like = col4.feedback("thumbs", key=f"like_{id}")
-            # do something with this
+            if like is not None and like != st.session_state.score.get(id):
+                set_movie_like(id, like)
+                st.session_state.score[id] = like
 
             col2.markdown(
                 f"#### Directed by: {', '.join(result['director'])}",
