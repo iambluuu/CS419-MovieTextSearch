@@ -48,8 +48,6 @@ def search_movies():
     director = st.session_state.director
     casts = st.session_state.casts
 
-    print("query: ", query)
-
     params = {"page": st.session_state.page}
     if query is not None and query.strip():
         params["query"] = query
@@ -228,10 +226,16 @@ def run():
                     use_container_width=True,
                 )
 
-            col2.markdown(
+            col3, col4 = col2.columns([9, 1])
+
+            col3.markdown(
                 f"## [{result['title']} ({result['release_date'][:4]})]({get_movie_url(id)})",
                 unsafe_allow_html=True,
             )
+            col4.markdown("")
+            like = col4.feedback("thumbs", key=f"like_{id}")
+            # do something with this
+
             col2.markdown(
                 f"#### Directed by: {', '.join(result['director'])}",
                 unsafe_allow_html=True,
@@ -249,7 +253,6 @@ def run():
                 overview = overview[:500] + "..."
 
             col2.write(overview)
-
     if st.session_state.results[0] <= st.session_state.page * 10:
         return
 
